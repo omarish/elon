@@ -1,14 +1,14 @@
 from distutils.core import setup
 
 setup(
-    name='tasklib',
+    name='elon',
     version='0.0.1',
     author='Omar Bohsali',
     author_email='me@omarish.com',
-    packages=['tasklib'],
-    # url="http://github.com/omarish/tasklib",
+    packages=['elon'],
+    # url="http://github.com/omarish/elon",
     license='MIT',
     description='TODO',
     long_description="TODO",
-    install_requires=['six>=1.11.0'],
+    install_requires=['six>=1.11.0'],  # TODO: deps
 )
