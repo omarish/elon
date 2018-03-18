@@ -2,19 +2,17 @@
 
 Elon is a lightweight async job queue backed by redis.
 
-## Read this first!
-
-This is in pre-alpha. Please use at your own risk.
-
 ## Why the name?
 
 Because Elon Musk gets things done.
 
 ## What it does?
 
-Say you have a Django or Flask application that is very network- or IO-bound. For example, your view might query a slow API. In this case, your web worker gets tied up until the API responds, which severely limits your throughput. In some cases, you must wait for the API's response to generate your response (in which case I'd recommend Tornado), but in others you might not need the response right away.
+Say you have a Django or Flask application that is heavily network- or IO-bound. Say in this app you have a view that makes a slow backend API call. When a user visits this view, your web worker gets tied up until the API responds, which severely limits your throughput. In some cases, you must wait for the API's response to generate your response (in which case I'd recommend Tornado), but in others you might not need the response right away, and in this case, Elon is perfect for your situation.
 
-Here is a long running task:
+## Example
+
+Here is a long-running task - pretend that instead of waiting 10 seconds, it's actually hitting a backend API.
 
 ```python
 import time
@@ -22,7 +20,7 @@ def long_api_request():
     time.sleep(10)
 ```
 
-We could rewrite it as an async task:
+We could rewrite it as an async task using elon:
 
 ```python
 import asyncio
@@ -33,7 +31,7 @@ async def long_api_request():
     await asyncio.sleep(10)
 ```
 
-Before:
+When it comes to calling the task, before:
 
 ```python
 @app.route('/enqueue_task')
