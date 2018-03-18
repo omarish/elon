@@ -1,4 +1,5 @@
 import uuid
+import asyncio
 import aioredis
 from urllib.parse import urlparse
 
@@ -110,11 +111,7 @@ class TaskTracker(TaskScheduler):
         self.logger.info(f"{task_id} change status to {new_status}")
 
 
-class Task(object):
-    def enqueue_inline(self, *args, **kwargs):
-        self.task_id = uuid.uuid4()
-        self.scheduler.schedule(self.task_id, self.func_name, args, kwargs)
-        return self
+
 
 class Task(object):
     def __init__(self, func, *args, **kwargs):
@@ -126,7 +123,12 @@ class Task(object):
         self.scheduler = InlineTaskScheduler()
 
     def __call__(self, *args, **kwargs):
-        return self.func(*args, **kwargs)
+        if asyncio.iscoroutinefunction(self.func):
+            loop = asyncio.get_event_loop()
+            result = loop.run_until_complete(asyncio.gather(self.func(*args, **kwargs)))
+            return result[0]
+        else:
+            return self.func(*args, **kwargs)
 
     def __repr__(self):
         return r'<Task name=%s status=%s task_id=%s>' % (self.func_name, self.status, self.task_id)

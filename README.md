@@ -2,9 +2,13 @@
 
 Elon is a lightweight async job queue backed by redis.
 
+## Read this first!
+
+This is in pre-alpha. Please use at your own risk.
+
 ## Why the name?
 
-Because Elon gets shit done.
+Because Elon Musk gets things done.
 
 ## What it does?
 
@@ -50,3 +54,15 @@ def enqueue_task():
 ```
 
 When you call `enqueue()` on a task, you'll instantly receive a UUID, which you can use to query for the result and see job progress.
+
+Decorating classes:
+
+You can also decorate classes, as long as they inherit from `Task`. Example:
+
+```python
+class ComplexTask(Task):
+    def execute(self):
+        pass
+```
+
+Classes that inherit from Task must define their own `execute` method - this is the method run to actually call the task.

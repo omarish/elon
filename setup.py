@@ -10,5 +10,5 @@ setup(
     license='MIT',
     description='TODO',
     long_description="TODO",
-    install_requires=['six>=1.11.0'],  # TODO: deps
+    install_requires=['six>=1.11.0', 'aioredis>=1.0.0', 'redis >= 2.10.5']
 )
