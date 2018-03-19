@@ -112,7 +112,6 @@ class TaskTracker(TaskScheduler):
 
 
 
-
 class Task(object):
     def __init__(self, func, *args, **kwargs):
         self.func = func
@@ -129,6 +128,10 @@ class Task(object):
             return result[0]
         else:
             return self.func(*args, **kwargs)
+
+    async def call_async(self, *args, **kwargs):
+        result = await self.func(*args, **kwargs)
+        return result
 
     def __repr__(self):
         return r'<Task name=%s status=%s task_id=%s>' % (self.func_name, self.status, self.task_id)
