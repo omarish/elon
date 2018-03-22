@@ -5,7 +5,6 @@ def wrap_list(obj):
 
 
 class singleton:
-    # TODO: cite source for this snippet
     """
     A non-thread-safe helper class to ease implementing singletons.
     This should be used as a decorator -- not a metaclass -- to the
@@ -18,6 +17,9 @@ class singleton:
 
     To get the singleton instance, use the `instance` method. Trying
     to use `__call__` will result in a `TypeError` being raised.
+
+    Source:
+    https://github.com/greglandrum/chembl_clippy/blob/master/singleton.py
 
     """
 

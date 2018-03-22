@@ -111,7 +111,6 @@ class TaskTracker(TaskScheduler):
         self.logger.info(f"{task_id} change status to {new_status}")
 
 
-
 class Task(object):
     def __init__(self, func, *args, **kwargs):
         self.func = func
@@ -175,6 +174,7 @@ class Registry(object):
             self.tasks[func.__name__] = dict(func=func, opts=opts)
         task_obj = Task(func=func)
         return task_obj
+
 
 registry = Registry.instance()
 task = registry.task
