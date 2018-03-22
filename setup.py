@@ -2,7 +2,7 @@ import re
 from distutils.core import setup
 
 meta_file = open("elon/metadata.py").read()
-md = dict(re.findall("__([a-z]+)__\s*=\s*'([^']+)'", meta_file))
+md = dict(re.findall(r"__([a-z]+)__\s*=\s*'([^']+)'", meta_file))
 
 setup(
     name='elon',
