@@ -1,11 +1,11 @@
 import elon
 from elon import task
 from elon import config as elon_config
-elon_config.update(dict(
-    redis_url="redis://localhost:6379/0",
-    work_queue="work_queue",
-    status_prefix="task_result"
-))
+
+elon_config.redis_url = "redis://localhost:6379/0"
+elon_config.work_queue = "work_queue"
+elon_config.status_prefix = "task_result"
+
 
 @task
 def wrapped_function(a, b, c):

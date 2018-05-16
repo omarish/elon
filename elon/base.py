@@ -1,6 +1,5 @@
 import uuid
 import asyncio
-import aioredis
 from urllib.parse import urlparse
 
 import redis
@@ -12,34 +11,29 @@ from .status import TaskStatus
 
 @singleton
 class ConfigMap(object):
-    WRITABLE_OPTIONS = ('redis_url', 'work_queue', 'status_prefix')
-    data = {}
+    def __init__(self, redis_url=None, status_prefix=None, queue_name=None, worker_count=None):
+        self.redis_url = redis_url
+        self.status_prefix = status_prefix
+        self.queue_name = queue_name
+        self.worker_count = worker_count
 
-    def __init__(self, **opts):
-        for option in self.WRITABLE_OPTIONS:
-            self.data[option] = None
-
-    def update(self, opts):
-        self.data.update(opts)
-
-    def __getattr__(self, x, default=None):
-        value = self.data.get(x, default)
-        if not value:
-            raise AttributeError()
-        return value
+    def load(self, **config):
+        self.redis_url = config.get('redis_url')
+        self.status_prefix = config.get('status_prefix')
+        self.queue_name = config.get('queue_name')
+        self.worker_count = config.get('worker_count')
 
     @property
     def redis_opts(self):
         opts = {}
-        if self.data['redis_url']:
-            redis_info = urlparse(self.data['redis_url'])
-            opts.update({
-                'host': redis_info.hostname,
-                'port': redis_info.port,
-                'password': redis_info.password,
-            })
-            if len(redis_info.path) > 0:
-                opts['db'] = redis_info.path[1:]
+        redis_info = urlparse(self.redis_url)
+        opts.update({
+            'host': redis_info.hostname,
+            'port': redis_info.port,
+            'password': redis_info.password,
+        })
+        if len(redis_info.path) > 0:
+            opts['db'] = redis_info.path[1:]
         return opts
 
 config = ConfigMap.instance()
@@ -47,7 +41,7 @@ config = ConfigMap.instance()
 
 class TaskScheduler(object):
     def __init__(self):
-        self.queue_name = config.work_queue
+        self.queue_name = config.queue_name
         self._redis = None
 
     @property
@@ -72,8 +66,7 @@ class InlineTaskScheduler(TaskScheduler):
 
 class AsyncTaskScheduler(object):
     def __init__(self, redis_client):
-        self.queue_name = config.work_queue
-        # TODO: raise if not async connection
+        self.queue_name = config.queue_name
         self.redis = redis_client
 
     async def schedule(self, task_id, func, args=(), kwargs={}):
