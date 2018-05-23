@@ -2,7 +2,7 @@ import datetime
 
 
 def now():
-    return datetime.datetime.now()
+    return datetime.datetime.now(datetime.timezone.utc)
 
 def wrap_list(obj):
     if not isinstance(obj, (list, tuple)):

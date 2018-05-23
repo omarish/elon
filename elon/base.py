@@ -1,30 +1,25 @@
-import logging
 import uuid
 import asyncio
 from urllib.parse import urlparse
 
-import redis
-import aioredis
-
-from .serialization import serialize_task, serialize, deserialize
-from .util import singleton, now
+from .serialization import deserialize
+from .util import singleton
 from .status import TaskStatus
-from .errors import InvalidTaskStatus
 
-
-default_logger = logging.getLogger('elon')
+from .tracker import TaskTracker
 
 
 @singleton
 class ConfigMap(object):
-    def __init__(self, redis_url=None, status_prefix=None, queue_name=None, worker_count=None):
+    def __init__(self, redis_url=None, status_prefix=None, queue_name=None, worker_count=None, result_expiry_time=3600):
         self.redis_url = redis_url
         self.status_prefix = status_prefix
         self.queue_name = queue_name
         self.worker_count = worker_count
+        self.result_expiry_time = result_expiry_time
 
     def load(self, **config):
-        for opt in ['redis_url', 'status_prefix', 'queue_name', 'worker_count']:
+        for opt in ['redis_url', 'status_prefix', 'queue_name', 'worker_count', 'result_expiry_time']:
             setattr(self, opt, config.get(opt))
 
     @property
@@ -41,25 +36,6 @@ class ConfigMap(object):
         return opts
 
 config = ConfigMap.instance()
-
-
-
-class ElonBase(object):
-    def __init__(self, is_async=False):
-        self.config = config
-        if is_async:
-            loop = asyncio.get_event_loop()
-            coros = [self.install_redis_async()]
-            results = loop.run_until_complete(asyncio.gather(*coros))
-            self.redis = results[0]
-        else:
-            self.redis = self.install_redis_inline()
-
-    def install_redis_inline(self):
-        return redis.StrictRedis(**self.config.redis_opts)
-
-    async def install_redis_async(self):
-        return await aioredis.create_connection(self.config.redis_url)
 
 
 @singleton
@@ -96,58 +72,6 @@ registry = Registry.instance()
 task = registry.task
 async_task = registry.async_task
 
-
-
-class TaskTracker(ElonBase):
-    DEFAULT_RESULT_EXPIRY = 3600
-
-    # def __new__(cls, classname=None, mcs=[], attrdict={}):
-    #     for status in TaskStatus:
-    #         func_name = f'mark_{status.name.lower()}'
-    #         print(f'create func {func_name}')
-    #     return super().__new__(cls, classname, mcs, attrdict)
-
-    def __init__(self, *args, logger=None, result_expiry_time=None, **kwargs):
-        self.logger = logger or default_logger
-        self.result_expiry_time = result_expiry_time or self.DEFAULT_RESULT_EXPIRY
-        super().__init__(*args, **kwargs)
-
-    def key_name(self, task_id):
-        return ":".join([self.config.status_prefix, str(task_id)])
-
-    def mark_status(self, task_id, new_status):
-        if new_status not in TaskStatus:
-            raise InvalidTaskStatus("new_status must be type of TaskStatus")
-        redis_key = self.key_name(task_id)
-        self.redis.expire(redis_key, self.result_expiry_time)
-        self.redis.hset(redis_key, 'status', new_status)
-        self.logger.info(f"{task_id} change status to {new_status}")
-
-    def complete(self, task_id, result=None, status=TaskStatus.SUCCESS, excinfo=None):
-        key_name = self.key_name(task_id)
-        body = {'status': serialize(status)}
-        if result:
-            body['result'] = serialize(result)
-        if excinfo:
-            body['excinfo'] = serialize(excinfo)
-        self.redis.hmset(key_name, body)
-
-    def schedule(self, task_id, func, args, kwargs):
-        serialized = serialize_task(task_id, func, args, kwargs)
-        key_name = self.key_name(task_id)
-        with self.redis.pipeline() as pipe:
-            pipe.lpush(self.config.queue_name, serialized)
-            pipe.hmset(key_name, {
-                'status': serialize(TaskStatus.INIT),
-                'submitted': serialize(now()),
-                'result': serialize(None),
-                'body': serialized
-            })
-            pipe.expire(key_name, self.result_expiry_time)
-            pipe.execute()
-
-    def get_task_by_uuid(self, task_id):
-        return self.redis.hgetall(self.key_name(task_id))
 
 
 class Task(object):

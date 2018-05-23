@@ -5,3 +5,6 @@ docs:
 
 tests:
 	python -m pytest
+
+worker:
+	python -m elon.worker
