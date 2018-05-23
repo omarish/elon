@@ -6,9 +6,13 @@ class BaseSerializer(object):
 
 class PickleSerializer(BaseSerializer):
     @staticmethod
-    def serialize(task_id, func, args, kwargs):
+    def serialize_task(task_id, func, args, kwargs):
         obj = (task_id, func, args, kwargs)
         return pickle.dumps(obj)
+
+    @staticmethod
+    def serialize(*args, **kwargs):
+        return pickle.dumps(*args, **kwargs)
 
     @staticmethod
     def deserialize(obj):
@@ -16,4 +20,5 @@ class PickleSerializer(BaseSerializer):
 
 default_serializer = PickleSerializer
 serialize = default_serializer.serialize
+serialize_task = default_serializer.serialize_task
 deserialize = default_serializer.deserialize
