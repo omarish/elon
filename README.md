@@ -1,5 +1,8 @@
 # Elon
 
+[![pypi-version]][pypi]
+
+
 Elon is a lightweight async job queue backed by redis.
 
 ## Why the name?
@@ -64,3 +67,6 @@ class ComplexTask(Task):
 ```
 
 Classes that inherit from Task must define their own `execute` method - this is the method run to actually call the task.
+
+[pypi-version]: https://img.shields.io/pypi/v/elon.svg
+[pypi]: https://pypi.org/project/elon/
